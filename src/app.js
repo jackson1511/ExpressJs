@@ -3,7 +3,7 @@ const express = require("express");
 const connectDB = require("./config/db"); // Ensure the path to db.js is correct
 const verifyToken = require("./middleware/auth");
 const authorize = require("./middleware/authorize");
-
+const cors = require("cors");
 const app = express();
 
 // Import routes
@@ -21,6 +21,14 @@ app.use(express.json()); // Ensure this is included to parse JSON bodies
 
 // Connect to the database
 connectDB();
+
+const corsOptions = {
+  origin: "http://localhost:5174", // Allow only requests from example.com
+  methods: ["GET", "POST", "PUT", "DELETE"], // Allow specific HTTP methods
+  allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
+  credentials: true, // Allow cookies to be sent
+};
+app.use(cors(corsOptions));
 
 // Use routes
 app.use("/api/v1", userRoutes); // Prefix routes with /api/v1
