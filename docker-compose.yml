@@ -1,0 +1,22 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017" # Expose MongoDB's default port on your local machine
+    volumes:
+      - ./data/db:/data/db # Persist data on your host machine
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: mongodb
+    restart: always
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    environment:
+      ME_CONFIG_MONGODB_URL: "mongodb://root:root@mongodb:27017/"
+    ports:
+      - "8008:8081" # Expose Mongo Express port
+    depends_on:
+      - mongodb # Ensure MongoDB is ready before starting mongo-express
