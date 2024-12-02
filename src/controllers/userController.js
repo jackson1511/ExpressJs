@@ -1,79 +1,88 @@
 const User = require("../models/userModel");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-// Controller to create a new user
-const createUser = async (req, res) => {
-  const { name, email, age } = req.body;
-  const newUser = new User({
-    name,
-    email,
-    age,
-  });
+// LOGIN
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+  console.log("LOGIN :: ", { email, password });
 
   try {
-    const savedUser = await newUser.save();
-    res.status(201).json(savedUser); // Respond with the created user
-  } catch (err) {
-    res.status(400).json({ error: err.message }); // Handle errors
-  }
-};
+    // find user
+    const user = await User.findOne({ email });
 
-// Controller to get all users
-const getUsers = async (req, res) => {
-  try {
-    const users = await User.find(); // Fetch all users
-    res.status(200).json(users);
-  } catch (err) {
-    res.status(400).json({ error: err.message }); // Handle errors
-  }
-};
-
-// Controller to get a specific user by ID
-const getUserById = async (req, res) => {
-  const userId = req.params.id;
-  console.log("GET User ID :: ", userId);
-  try {
-    const user = await User.findById(userId);
+    // If user not found
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.status(200).json(user);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
 
-// Controller to update a user by ID
-const updateUser = async (req, res) => {
-  const userId = req.params.id;
-  console.log("Update with User ID :: ", userId);
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
-  const { name, email, age } = req.body;
-  console.log("NEW USER DATA :: ", { name, email, age });
-  try {
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { name, email, age },
-      { new: true }
+    // If all good, create token
+    const token = jwt.sign(
+      { userId: user._id, roles: user.role }, // You may want to exclude sensitive fields
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
     );
-    if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    res.status(200).json(updatedUser);
+
+    // Return token and some user info, but not sensitive details like password
+    const userResponse = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
+    res
+      .status(200)
+      .json({ message: "Login successful", user: userResponse, token });
   } catch (err) {
+    console.error("Error during login:", err); // Log the error for debugging
     res.status(400).json({ error: err.message });
   }
 };
 
-// DELETE :: user
-const deleteUser = async (req, res) => {
-  const userId = req.params.id;
-  console.log("DELETE User ID :: ", userId);
+// REGISTER
+const registerUser = async (req, res) => {
+  const { name, email, age, password, role } = req.body;
+  console.log("REGISTER :: ", { name, email, age, password });
   try {
-    const deletedUser = await User.findByIdAndDelete(userId);
-    if (!deletedUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    res.status(200).json(deletedUser);
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser)
+      return res.status(400).json({ msg: "User already exists" });
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user
+    const user = new User({
+      name,
+      email,
+      age,
+      password: hashedPassword,
+      role: role || ["user"],
+    });
+    await user.save();
+
+    // If all good, create token
+    const token = jwt.sign(
+      { userId: user._id, roles: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Return token and some user info, but not sensitive details like password
+    const userResponse = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
+    res.status(201).json({ msg: "register successfully", userResponse, token });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -81,9 +90,6 @@ const deleteUser = async (req, res) => {
 
 // Export controllers
 module.exports = {
-  createUser,
-  getUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
+  loginUser,
+  registerUser,
 };
