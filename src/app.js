@@ -41,13 +41,13 @@ app.use(
   dashboardRoutes
 );
 
+// product routes
+app.use("/api/v1/products", verifyToken, authorize(["user"]), productRoutes);
+
 // Catch-all route for handling 404 errors (not found)
 app.use("*", (req, res) => {
   res.status(404).json({ msg: "Route not found" });
 });
-
-// product routes
-app.use("/api/v1/products", verifyToken, authorize(["user"]), productRoutes);
 
 // Start the server
 app.listen(port, () => {
