@@ -14,7 +14,11 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Create the User model
+/**
+ * create model
+ * @name User
+ * @table users
+ */
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;

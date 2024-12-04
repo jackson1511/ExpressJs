@@ -10,6 +10,7 @@ const app = express();
 const userRoutes = require("./routes/userRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const productRoutes = require("./routes/productRoutes");
+const todoRoutes = require("./routes/todoRoutes");
 
 // Use dotenv for environment variables
 require("dotenv").config();
@@ -23,8 +24,8 @@ app.use(express.json()); // Ensure this is included to parse JSON bodies
 connectDB();
 
 const corsOptions = {
-  origin: "http://localhost:5174", // Allow only requests from example.com
-  methods: ["GET", "POST", "PUT", "DELETE"], // Allow specific HTTP methods
+  origin: "http://localhost:5173", // Allow only requests from example.com
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allow specific HTTP methods
   allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
   credentials: true, // Allow cookies to be sent
 };
@@ -32,6 +33,9 @@ app.use(cors(corsOptions));
 
 // Use routes
 app.use("/api/v1", userRoutes); // Prefix routes with /api/v1
+
+// Todo routes
+app.use("/api/v1/todos", todoRoutes);
 
 // dashboard routes
 app.use(
